@@ -13,7 +13,22 @@ public class Scene {
 	private Color bg_color = null;
 	private int shad_rays, rec_iter;
 	public List<Vector> screen = null;
+	private PointCloud pcloud = null;
 	
+	/**
+	 * @return the pcloud
+	 */
+	public PointCloud getPcloud() {
+		return pcloud;
+	}
+
+	/**
+	 * @param pcloud the pcloud to set
+	 */
+	public void setPcloud(PointCloud pcloud) {
+		this.pcloud = pcloud;
+	}
+
 	public Scene() {
 		lights = new ArrayList<Light>();
 		spheres = new ArrayList<Sphere>();
