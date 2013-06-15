@@ -54,14 +54,14 @@ public class RayTracer {
 				tracer.imageHeight = Integer.parseInt(args[3]);
 			}
 
+//            PointCloud my_cloud = PlyParser.parser("/home/artyom/Figure1_Deer.ply");
+//            System.out.println("Test " + my_cloud.getCloud().size());
 			// Parse scene file:
 			tracer.parseScene(sceneFileName);
 
 			// Render scene:
 			tracer.renderScene(outputFileName);
 
-			// } catch (IOException e) {
-			// System.out.println(e.getMessage());
 		} catch (RayTracerException e) {
 			System.out.println(e.getMessage());
 		} catch (Exception e) {
