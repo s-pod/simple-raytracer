@@ -314,7 +314,28 @@ public class RayTracer {
 		Vector ray_direction = Vector.sum(pixel_pos,
 				Vector.multiplyByConst(camera_pos, -1));
 		Vector.normalize(ray_direction);
+		Vector.normalize(right);
+
 		return new Ray(camera_pos, ray_direction);
+	}
+
+	public Vector projectPointOnScreen(Vector point) {
+
+		double screenDist = scene.getCamera().getScreen_dist();
+		Vector camera_pos = scene.getCamera().getPosition();
+		Vector towards = scene.getCamera().getTowards();
+		Vector up = scene.getCamera().getUp();
+		Vector right = Vector.crossProd(towards, up);
+
+		Vector ray = Vector.sum(point, Vector.multiplyByConst(camera_pos, -1));
+		double ratio = Vector.dotProd(ray, towards) / screenDist;
+		Vector screenProj = Vector.multiplyByConst(ray, 1.0 / ratio);
+		Vector centerOfScreen = Vector.multiplyByConst(towards, screenDist);
+		// vector from the center of screen to the projected point
+		Vector centerToProj = Vector.sum(ray,
+				Vector.multiplyByConst(centerOfScreen, -1));
+		double x_offset = Vector.dotProd(centerToProj, right);
+		return null;
 	}
 
 	/**
@@ -478,8 +499,12 @@ public class RayTracer {
 		int x, y;
 		// Create a byte array to hold the pixel data:
 		byte[] rgbData = new byte[this.imageWidth * this.imageHeight * 3];
+		boolean[][] screen = new boolean[imageWidth][imageHeight];
 
 		for (y = 0; y < imageHeight; y++) {
+			// render points
+
+			// render scene
 			for (x = 0; x < imageWidth; x++) {
 				Ray r = ConstructRayThroughPixel(x, y);
 				Color c = calcColor(r, 0);

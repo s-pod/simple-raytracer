@@ -32,4 +32,8 @@ public class PointCloud {
 		this.cloud = cloud;
 	}
 
+	public void calcBBox() {
+		
+	}
+
 }
