@@ -54,8 +54,9 @@ public class RayTracer {
 				tracer.imageHeight = Integer.parseInt(args[3]);
 			}
 
-//            PointCloud my_cloud = PlyParser.parser("/home/artyom/Figure1_Deer.ply");
-//            System.out.println("Test " + my_cloud.getCloud().size());
+			// PointCloud my_cloud =
+			// PlyParser.parser("/home/artyom/Figure1_Deer.ply");
+			// System.out.println("Test " + my_cloud.getCloud().size());
 			// Parse scene file:
 			tracer.parseScene(sceneFileName);
 
@@ -180,6 +181,18 @@ public class RayTracer {
 					scene.lights.add(lgt);
 					System.out.println(String.format("Parsed light (line %d)",
 							lineNum));
+				} else if (code.equals("pnt")) {
+					// Add code here to parse light parameters
+					String fname = params[0];
+					int size = Integer.parseInt(params[1]);
+					Color c = new Color(Double.parseDouble(params[2]),
+							Double.parseDouble(params[3]),
+							Double.parseDouble(params[4]));
+					PointCloud pcloud = new PointCloud(size, c);
+					scene.setPcloud(pcloud);
+					PlyParser.parser(fname, pcloud);
+					System.out.println(String.format(
+							"Parsed point cloud (line %d)", lineNum));
 				} else {
 					System.out.println(String.format(
 							"ERROR: Did not recognize object: %s (line %d)",
@@ -194,26 +207,23 @@ public class RayTracer {
 			System.out.println("Camera not defined");
 			System.exit(0);
 		}
-		if (scene.materials == null) {
-			System.out.println("Materials not defined");
-			System.exit(0);
-		} else {
-			for (int i = 0; i < scene.spheres.size(); i++) {
-				if (scene.spheres.get(i).matIndex > scene.materials.size()) {
-					System.out.println("Undefined material index");
-					System.exit(0);
-				}
-				scene.spheres.get(i).setMat(
-						scene.materials.get(scene.spheres.get(i).matIndex));
+
+		for (int i = 0; i < scene.spheres.size(); i++) {
+			if (scene.spheres.get(i).matIndex > scene.materials.size()) {
+				System.out.println("Undefined material index");
+				System.exit(0);
 			}
-			for (int i = 0; i < scene.planes.size(); i++) {
-				if (scene.spheres.get(i).matIndex > scene.materials.size()) {
-					System.out.println("Undefined material index");
-					System.exit(0);
-				}
-				scene.planes.get(i).setMat(
-						scene.materials.get(scene.planes.get(i).matIndex));
+			scene.spheres.get(i).setMat(
+					scene.materials.get(scene.spheres.get(i).matIndex));
+		}
+		for (int i = 0; i < scene.planes.size(); i++) {
+			if (scene.spheres.get(i).matIndex > scene.materials.size()) {
+				System.out.println("Undefined material index");
+				System.exit(0);
 			}
+			scene.planes.get(i).setMat(
+					scene.materials.get(scene.planes.get(i).matIndex));
+
 		}
 		System.out.println("Finished parsing scene file " + sceneFileName);
 		r.close();
@@ -332,10 +342,19 @@ public class RayTracer {
 		Vector screenProj = Vector.multiplyByConst(ray, 1.0 / ratio);
 		Vector centerOfScreen = Vector.multiplyByConst(towards, screenDist);
 		// vector from the center of screen to the projected point
-		Vector centerToProj = Vector.sum(ray,
+		Vector centerToProj = Vector.sum(screenProj,
 				Vector.multiplyByConst(centerOfScreen, -1));
 		double x_offset = Vector.dotProd(centerToProj, right);
-		return null;
+		if (x_offset < -1 || x_offset > 1) {
+			return null;
+		}
+		x_offset = (x_offset + 1.0d) / 2.0d;
+		double y_offset = Vector.dotProd(centerToProj, up);
+		if (y_offset < -1 || y_offset > 1) {
+			return null;
+		}
+		y_offset = (-1 * y_offset + 1.0d) / 2.0d;
+		return new Vector(x_offset, y_offset, 0);
 	}
 
 	/**
@@ -496,16 +515,55 @@ public class RayTracer {
 	 */
 	public void renderScene(String outputFileName) {
 		long startTime = System.currentTimeMillis();
-		int x, y;
+		int x, y, i;
 		// Create a byte array to hold the pixel data:
 		byte[] rgbData = new byte[this.imageWidth * this.imageHeight * 3];
 		boolean[][] screen = new boolean[imageWidth][imageHeight];
+		boolean[][] bbox = new boolean[imageWidth][imageHeight];
+		scene.getPcloud().calcBBox();
+		for (i = 0; i < scene.getPcloud().getCloud().size(); i++) {
+
+			Vector proj = projectPointOnScreen(scene.getPcloud().getCloud()
+					.get(i).getP());
+			if (proj == null) {
+				continue;
+			}
+			screen[(int) Math.round(proj.getX() * imageWidth)][(int) Math
+					.round(proj.getY() * imageHeight)] = true;
+		}
+
+		for (i = 0; i < 6; i++) {
+			Vector proj = projectPointOnScreen(new Vector(scene.getPcloud()
+					.getBbox().get(i).getX()
+					+ scene.getPcloud().getCenterOfMass().getX(), scene
+					.getPcloud().getBbox().get(i).getY()
+					+ scene.getPcloud().getCenterOfMass().getY(), scene
+					.getPcloud().getBbox().get(i).getZ()
+					+ scene.getPcloud().getCenterOfMass().getZ()));
+			if (proj == null) {
+				continue;
+			}
+			bbox[(int) Math.round(proj.getX() * imageWidth)][(int) Math
+					.round(proj.getY() * imageHeight)] = true;
+		}
 
 		for (y = 0; y < imageHeight; y++) {
 			// render points
 
 			// render scene
 			for (x = 0; x < imageWidth; x++) {
+				if (bbox[x][y]) {
+					rgbData[(y * this.imageWidth + (imageWidth - x - 1)) * 3 + 0] = (byte) (255);
+					rgbData[(y * this.imageWidth + (imageWidth - x - 1)) * 3 + 1] = (byte) (0);
+					rgbData[(y * this.imageWidth + (imageWidth - x - 1)) * 3 + 2] = (byte) (0);
+					continue;
+				}
+				if (screen[x][y]) {
+					rgbData[(y * this.imageWidth + (imageWidth - x - 1)) * 3 + 0] = (byte) (255);
+					rgbData[(y * this.imageWidth + (imageWidth - x - 1)) * 3 + 1] = (byte) (255);
+					rgbData[(y * this.imageWidth + (imageWidth - x - 1)) * 3 + 2] = (byte) (255);
+					continue;
+				}
 				Ray r = ConstructRayThroughPixel(x, y);
 				Color c = calcColor(r, 0);
 				rgbData[(y * this.imageWidth + (imageWidth - x - 1)) * 3 + 0] = (byte) (Math
