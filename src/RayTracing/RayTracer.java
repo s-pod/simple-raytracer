@@ -151,9 +151,9 @@ public class RayTracer {
 					Vector pos = new Vector(Double.parseDouble(params[0]),
 							Double.parseDouble(params[1]),
 							Double.parseDouble(params[2]));
-					Sphere sph = new Sphere(pos, Double.parseDouble(params[3]),
+					Shape sph = new Sphere(pos, Double.parseDouble(params[3]),
 							null, Integer.parseInt(params[4]) - 1);
-					scene.spheres.add(sph);
+					scene.shapes.add(sph);
 					System.out.println(String.format("Parsed sphere (line %d)",
 							lineNum));
 				} else if (code.equals("pln")) {
@@ -161,9 +161,9 @@ public class RayTracer {
 					Vector pos = new Vector(Double.parseDouble(params[0]),
 							Double.parseDouble(params[1]),
 							Double.parseDouble(params[2]));
-					Plane pln = new Plane(pos, Double.parseDouble(params[3]),
+					Shape pln = new Plane(pos, Double.parseDouble(params[3]),
 							null, Integer.parseInt(params[4]) - 1);
-					scene.planes.add(pln);
+					scene.shapes.add(pln);
 					System.out.println(String.format("Parsed plane (line %d)",
 							lineNum));
 				} else if (code.equals("lgt")) {
@@ -208,22 +208,13 @@ public class RayTracer {
 			System.exit(0);
 		}
 
-		for (int i = 0; i < scene.spheres.size(); i++) {
-			if (scene.spheres.get(i).matIndex > scene.materials.size()) {
+		for (int i = 0; i < scene.shapes.size(); i++) {
+			if (scene.shapes.get(i).getMatIndex() > scene.materials.size()) {
 				System.out.println("Undefined material index");
 				System.exit(0);
 			}
-			scene.spheres.get(i).setMat(
-					scene.materials.get(scene.spheres.get(i).matIndex));
-		}
-		for (int i = 0; i < scene.planes.size(); i++) {
-			if (scene.spheres.get(i).matIndex > scene.materials.size()) {
-				System.out.println("Undefined material index");
-				System.exit(0);
-			}
-			scene.planes.get(i).setMat(
-					scene.materials.get(scene.planes.get(i).matIndex));
-
+			scene.shapes.get(i).setMaterial(
+					scene.materials.get(scene.shapes.get(i).getMatIndex()));
 		}
 		System.out.println("Finished parsing scene file " + sceneFileName);
 		r.close();
@@ -233,32 +224,20 @@ public class RayTracer {
 	 * returns intersection with the nearest object
 	 */
 	public Intersection intersectFirst(Ray r) {
-		double min_t_planes = Double.MAX_VALUE;
-		int min_plane_ind = -1;
-		double min_t_spheres = min_t_planes;
-		int min_sphere_ind = -1;
+		double min_t = Double.MAX_VALUE;
+		int min_ind = -1;
 
-		for (int i = 0; i < scene.spheres.size(); i++) {
-			double t = Sphere.sphereIntersec(scene.spheres.get(i), r);
-			if (t > min_dist_to_hit && t < min_t_spheres) {
-				min_t_spheres = t;
-				min_sphere_ind = i;
+		for (int i = 0; i < scene.shapes.size(); i++) {
+			double t = scene.shapes.get(i).intersect(r);
+			if (t > min_dist_to_hit && t < min_t) {
+				min_t = t;
+				min_ind = i;
 			}
 		}
-		for (int i = 0; i < scene.planes.size(); i++) {
-			double t = scene.planes.get(i).intersect(r);
-			if (t > min_dist_to_hit && t < min_t_planes) {
-				min_t_planes = t;
-				min_plane_ind = i;
-			}
-		}
-		if (min_t_spheres < min_t_planes) {
+		if (min_ind > -1) {
 			// sphere first
-			return new Intersection(sType.SPHERE, min_sphere_ind,
-					min_t_spheres, r);
-		} else if (min_plane_ind >= 0) {
-			// plane first
-			return new Intersection(sType.PLANE, min_plane_ind, min_t_planes, r);
+			return new Intersection(scene.shapes.get(min_ind).getType(),
+					min_ind, min_t, r);
 		} else {
 			// no intersection at all
 			return null;
@@ -364,13 +343,9 @@ public class RayTracer {
 		Color result = new Color(0, 0, 0);
 		Vector N;
 		Material mat;
-		if (hit.getType() == sType.SPHERE) {
-			N = scene.spheres.get(hit.getIndex()).getNormal(hit_point);
-			mat = scene.spheres.get(hit.getIndex()).getMat();
-		} else {
-			N = scene.planes.get(hit.getIndex()).getNormal();
-			mat = scene.planes.get(hit.getIndex()).getMaterial();
-		}
+		N = scene.shapes.get(hit.getIndex()).getNormal(hit_point);
+		mat = scene.shapes.get(hit.getIndex()).getMaterial();
+
 		double max_ray_energy = (1.0d / (scene.getShad_rays() * scene
 				.getShad_rays()));
 		for (int i = 0; i < scene.lights.size(); i++) {
@@ -441,13 +416,9 @@ public class RayTracer {
 		Vector hit_point = Vector.sum(r.getPosition(),
 				Vector.multiplyByConst(r.getDirection(), hit.getT()));
 		Material mat;
-		if (hit.getType() == sType.SPHERE) {
-			mat = scene.spheres.get(hit.getIndex()).getMat();
-			normal = scene.spheres.get(hit.getIndex()).getNormal(hit_point);
-		} else {
-			mat = scene.planes.get(hit.getIndex()).getMaterial();
-			normal = scene.planes.get(hit.getIndex()).getNormal();
-		}
+		mat = scene.shapes.get(hit.getIndex()).getMaterial();
+		normal = scene.shapes.get(hit.getIndex()).getNormal(hit_point);
+
 		// light
 		Color result = calcLightColor(hit_point, hit);
 		double trans = mat.getTrans();
@@ -533,21 +504,21 @@ public class RayTracer {
 						.round(proj.getY() * imageHeight)] = true;
 			}
 		}
-//
-//		for (i = 0; i < 6; i++) {
-//			Vector proj = projectPointOnScreen(new Vector(scene.getPcloud()
-//					.getBbox().get(i).getX()
-//					+ scene.getPcloud().getCenterOfMass().getX(), scene
-//					.getPcloud().getBbox().get(i).getY()
-//					+ scene.getPcloud().getCenterOfMass().getY(), scene
-//					.getPcloud().getBbox().get(i).getZ()
-//					+ scene.getPcloud().getCenterOfMass().getZ()));
-//			if (proj == null) {
-//				continue;
-//			}
-//			bbox[(int) Math.round(proj.getX() * imageWidth)][(int) Math
-//					.round(proj.getY() * imageHeight)] = true;
-//		}
+		//
+		// for (i = 0; i < 6; i++) {
+		// Vector proj = projectPointOnScreen(new Vector(scene.getPcloud()
+		// .getBbox().get(i).getX()
+		// + scene.getPcloud().getCenterOfMass().getX(), scene
+		// .getPcloud().getBbox().get(i).getY()
+		// + scene.getPcloud().getCenterOfMass().getY(), scene
+		// .getPcloud().getBbox().get(i).getZ()
+		// + scene.getPcloud().getCenterOfMass().getZ()));
+		// if (proj == null) {
+		// continue;
+		// }
+		// bbox[(int) Math.round(proj.getX() * imageWidth)][(int) Math
+		// .round(proj.getY() * imageHeight)] = true;
+		// }
 
 		for (y = 0; y < imageHeight; y++) {
 			// render points

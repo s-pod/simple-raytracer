@@ -1,10 +1,8 @@
 package RayTracing;
 
-public class Plane {
+public class Plane extends Shape {
 	private Vector normal;
 	private double offset;
-	private Material material;
-	public int matIndex;
 
 	/**
 	 * @param normal
@@ -12,19 +10,10 @@ public class Plane {
 	 * @param material
 	 */
 	public Plane(Vector normal, double offset, Material material, int matIndex) {
-		super();
+		super(sType.PLANE, material, matIndex);
 		Vector.normalize(normal);
 		this.normal = normal;
 		this.offset = offset;
-		this.material = material;
-		this.matIndex = matIndex;
-	}
-
-	/**
-	 * @return the normal
-	 */
-	public Vector getNormal() {
-		return normal;
 	}
 
 	/**
@@ -51,28 +40,15 @@ public class Plane {
 		this.offset = offset;
 	}
 
-	/**
-	 * @return the material
-	 */
-	public Material getMaterial() {
-		return material;
-	}
-
-	/**
-	 * @param material
-	 *            the material to set
-	 */
-	public void setMaterial(Material material) {
-		this.material = material;
-	}
-
 	public double intersect(Ray r) {
 		return (offset - Vector.dotProd(r.getPosition(), normal))
 				/ (Vector.dotProd(r.getDirection(), normal));
 	}
-	
-	public void setMat(Material mat){
-		this.material = mat;
+
+	@Override
+	public Vector getNormal(Vector point) {
+		// TODO Auto-generated method stub
+		return normal;
 	}
 
 }

@@ -47,17 +47,7 @@ public class Intersection {
 	}
 
 	static Material getHitMaterial(Intersection hit, Scene scene) {
-		Material mat;
-		if (hit.getType() == sType.SPHERE) {
-			mat = scene.spheres.get(hit.getIndex()).getMat();
-		} else if (hit.getType() == sType.PLANE) {
-			mat = scene.planes.get(hit.getIndex()).getMaterial();
-		} else {
-			mat = scene.ellipses.get(hit.getIndex()).getMat();
-		}
-		return mat;
+		return scene.shapes.get(hit.getIndex()).getMaterial();
 	}
-
-	
 
 }

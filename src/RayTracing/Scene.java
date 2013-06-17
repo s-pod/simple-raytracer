@@ -6,24 +6,20 @@ import java.util.List;
 public class Scene {
 
 	private Camera camera = null;
+	public List<Shape> shapes = null;
 	public List<Light> lights = null;
-	public List<Sphere> spheres = null;
-	public List<Plane> planes = null;
 	public List<Material> materials = null;
 	private Color bg_color = null;
 	private int shad_rays, rec_iter;
 	public List<Vector> screen = null;
 	public List<PointCloud> pcloud = null;
-	public List<Ellipse> ellipses = null;
 
 	public Scene() {
 		lights = new ArrayList<Light>();
-		spheres = new ArrayList<Sphere>();
-		planes = new ArrayList<Plane>();
 		materials = new ArrayList<Material>();
 		screen = new ArrayList<Vector>();
 		pcloud = new ArrayList<PointCloud>();
-		ellipses = new ArrayList<Ellipse>();
+		shapes = new ArrayList<Shape>();
 	}
 
 	/**
