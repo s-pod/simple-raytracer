@@ -189,7 +189,7 @@ public class RayTracer {
 							Double.parseDouble(params[3]),
 							Double.parseDouble(params[4]));
 					PointCloud pcloud = new PointCloud(size, c);
-					scene.setPcloud(pcloud);
+					scene.pcloud.add(pcloud);
 					PlyParser.parser(fname, pcloud);
 					System.out.println(String.format(
 							"Parsed point cloud (line %d)", lineNum));
@@ -515,37 +515,39 @@ public class RayTracer {
 	 */
 	public void renderScene(String outputFileName) {
 		long startTime = System.currentTimeMillis();
-		int x, y, i;
+		int x, y, i, j;
 		// Create a byte array to hold the pixel data:
 		byte[] rgbData = new byte[this.imageWidth * this.imageHeight * 3];
 		boolean[][] screen = new boolean[imageWidth][imageHeight];
 		boolean[][] bbox = new boolean[imageWidth][imageHeight];
-		scene.getPcloud().calcBBox();
-		for (i = 0; i < scene.getPcloud().getCloud().size(); i++) {
+		for (i = 0; i < scene.pcloud.size(); i++) {
+			scene.pcloud.get(i).calcBBox();
+			for (j = 0; j < scene.pcloud.get(i).getCloud().size(); j++) {
 
-			Vector proj = projectPointOnScreen(scene.getPcloud().getCloud()
-					.get(i).getP());
-			if (proj == null) {
-				continue;
+				Vector proj = projectPointOnScreen(scene.pcloud.get(i)
+						.getCloud().get(j).getP());
+				if (proj == null) {
+					continue;
+				}
+				screen[(int) Math.round(proj.getX() * imageWidth)][(int) Math
+						.round(proj.getY() * imageHeight)] = true;
 			}
-			screen[(int) Math.round(proj.getX() * imageWidth)][(int) Math
-					.round(proj.getY() * imageHeight)] = true;
 		}
-
-		for (i = 0; i < 6; i++) {
-			Vector proj = projectPointOnScreen(new Vector(scene.getPcloud()
-					.getBbox().get(i).getX()
-					+ scene.getPcloud().getCenterOfMass().getX(), scene
-					.getPcloud().getBbox().get(i).getY()
-					+ scene.getPcloud().getCenterOfMass().getY(), scene
-					.getPcloud().getBbox().get(i).getZ()
-					+ scene.getPcloud().getCenterOfMass().getZ()));
-			if (proj == null) {
-				continue;
-			}
-			bbox[(int) Math.round(proj.getX() * imageWidth)][(int) Math
-					.round(proj.getY() * imageHeight)] = true;
-		}
+//
+//		for (i = 0; i < 6; i++) {
+//			Vector proj = projectPointOnScreen(new Vector(scene.getPcloud()
+//					.getBbox().get(i).getX()
+//					+ scene.getPcloud().getCenterOfMass().getX(), scene
+//					.getPcloud().getBbox().get(i).getY()
+//					+ scene.getPcloud().getCenterOfMass().getY(), scene
+//					.getPcloud().getBbox().get(i).getZ()
+//					+ scene.getPcloud().getCenterOfMass().getZ()));
+//			if (proj == null) {
+//				continue;
+//			}
+//			bbox[(int) Math.round(proj.getX() * imageWidth)][(int) Math
+//					.round(proj.getY() * imageHeight)] = true;
+//		}
 
 		for (y = 0; y < imageHeight; y++) {
 			// render points

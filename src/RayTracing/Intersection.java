@@ -50,8 +50,10 @@ public class Intersection {
 		Material mat;
 		if (hit.getType() == sType.SPHERE) {
 			mat = scene.spheres.get(hit.getIndex()).getMat();
-		} else {
+		} else if (hit.getType() == sType.PLANE) {
 			mat = scene.planes.get(hit.getIndex()).getMaterial();
+		} else {
+			mat = scene.ellipses.get(hit.getIndex()).getMat();
 		}
 		return mat;
 	}

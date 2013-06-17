@@ -1,5 +1,5 @@
 package RayTracing;
 
 public enum sType {
-	PLANE,SPHERE
+	PLANE,SPHERE,ELLIPSE
 }

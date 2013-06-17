@@ -13,21 +13,8 @@ public class Scene {
 	private Color bg_color = null;
 	private int shad_rays, rec_iter;
 	public List<Vector> screen = null;
-	private PointCloud pcloud = null;
-	
-	/**
-	 * @return the pcloud
-	 */
-	public PointCloud getPcloud() {
-		return pcloud;
-	}
-
-	/**
-	 * @param pcloud the pcloud to set
-	 */
-	public void setPcloud(PointCloud pcloud) {
-		this.pcloud = pcloud;
-	}
+	public List<PointCloud> pcloud = null;
+	public List<Ellipse> ellipses = null;
 
 	public Scene() {
 		lights = new ArrayList<Light>();
@@ -35,6 +22,8 @@ public class Scene {
 		planes = new ArrayList<Plane>();
 		materials = new ArrayList<Material>();
 		screen = new ArrayList<Vector>();
+		pcloud = new ArrayList<PointCloud>();
+		ellipses = new ArrayList<Ellipse>();
 	}
 
 	/**

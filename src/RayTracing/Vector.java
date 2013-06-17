@@ -59,6 +59,11 @@ public class Vector {
 		this.z = z;
 	}
 
+	public double[] toArray() {
+		double[] arr = { x, y, z, 1 };
+		return arr;
+	}
+
 	/*
 	 * Vector Math
 	 */
