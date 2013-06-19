@@ -1,5 +1,7 @@
 package RayTracing;
 
+import Jama.Matrix;
+
 public class Vector {
 	private double x, y, z;
 
@@ -12,6 +14,10 @@ public class Vector {
 		this.x = x;
 		this.y = y;
 		this.z = z;
+	}
+
+	public Vector(Matrix mat) {
+		setFromMatrix(mat);
 	}
 
 	/**
@@ -59,9 +65,15 @@ public class Vector {
 		this.z = z;
 	}
 
-	public double[] toArray() {
-		double[] arr = { x, y, z, 1 };
-		return arr;
+	public Matrix toMatrix() {
+		double[][] arr = { { x }, { y }, { z }, { 1 } };
+		return new Matrix(arr);
+	}
+
+	public void setFromMatrix(Matrix mat) {
+		x = mat.get(0, 0);
+		y = mat.get(1, 0);
+		z = mat.get(2, 0);
 	}
 
 	/*
@@ -118,6 +130,6 @@ public class Vector {
 	@Override
 	public String toString() {
 		// TODO: unnecessary. Made for testing purposes.
-		return "(" + x + "," + y + "," + z + ")";
+		return x + " " + y + " " + z;
 	}
 }

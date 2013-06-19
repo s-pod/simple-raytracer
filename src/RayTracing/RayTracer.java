@@ -17,6 +17,8 @@ import java.io.IOException;
 
 import javax.imageio.ImageIO;
 
+import Jama.Matrix;
+
 /**
  * Main class for ray tracing exercise.
  */
@@ -333,7 +335,8 @@ public class RayTracer {
 			return null;
 		}
 		y_offset = (-1 * y_offset + 1.0d) / 2.0d;
-		return new Vector(x_offset, y_offset, 0);
+		return new Vector(x_offset, y_offset, scene.pcloud.get(0).getP_size()
+				/ Math.sqrt(Vector.square_dist(point, camera_pos)));
 	}
 
 	/**
@@ -500,25 +503,26 @@ public class RayTracer {
 				if (proj == null) {
 					continue;
 				}
-				screen[(int) Math.round(proj.getX() * imageWidth)][(int) Math
-						.round(proj.getY() * imageHeight)] = true;
+				int size_w = (int) Math.round(proj.getZ());
+				int size_h = (int) Math.round(proj.getZ());
+				fillSquare(screen, (int) Math.round(proj.getX() * imageWidth),
+						(int) Math.round(proj.getY() * imageHeight), size_w,
+						size_h);
 			}
+			System.out.println(scene.pcloud.get(i));
 		}
-		//
-		// for (i = 0; i < 6; i++) {
-		// Vector proj = projectPointOnScreen(new Vector(scene.getPcloud()
-		// .getBbox().get(i).getX()
-		// + scene.getPcloud().getCenterOfMass().getX(), scene
-		// .getPcloud().getBbox().get(i).getY()
-		// + scene.getPcloud().getCenterOfMass().getY(), scene
-		// .getPcloud().getBbox().get(i).getZ()
-		// + scene.getPcloud().getCenterOfMass().getZ()));
-		// if (proj == null) {
-		// continue;
-		// }
-		// bbox[(int) Math.round(proj.getX() * imageWidth)][(int) Math
-		// .round(proj.getY() * imageHeight)] = true;
-		// }
+
+		for (i = 0; i < 8; i++) {
+			Vector proj = projectPointOnScreen(scene.pcloud.get(0)
+					.getBbox_points().get(i));
+			if (proj == null) {
+				continue;
+			}
+			int size_w = (int) Math.round(proj.getZ());
+			int size_h = (int) Math.round(proj.getZ());
+			fillSquare(bbox, (int) Math.round(proj.getX() * imageWidth),
+					(int) Math.round(proj.getY() * imageHeight), size_w, size_h);
+		}
 
 		for (y = 0; y < imageHeight; y++) {
 			// render points
@@ -566,6 +570,21 @@ public class RayTracer {
 
 	// ////////////////////// FUNCTIONS TO SAVE IMAGES IN PNG FORMAT
 	// //////////////////////////////////////////
+
+	private void fillSquare(boolean[][] screen, int x, int y, int size_w,
+			int size_h) {
+		// TODO Auto-generated method stub
+		for (int i = 0; i < screen.length; i++) {
+			for (int j = 0; j < screen[0].length; j++) {
+				if (i > x - (double) size_w / (double) 2
+						&& i < x + (double) size_w / (double) 2
+						&& j > y - (double) size_h / (double) 2
+						&& j < y + (double) size_h / (double) 2) {
+					screen[i][j] = true;
+				}
+			}
+		}
+	}
 
 	/*
 	 * Saves RGB data as an image in png format to the specified location.
