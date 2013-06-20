@@ -54,9 +54,6 @@ public class RayTracer {
 				tracer.imageHeight = Integer.parseInt(args[3]);
 			}
 
-			// PointCloud my_cloud =
-			// PlyParser.parser("/home/artyom/Figure1_Deer.ply");
-			// System.out.println("Test " + my_cloud.getCloud().size());
 			// Parse scene file:
 			tracer.parseScene(sceneFileName);
 
@@ -234,7 +231,6 @@ public class RayTracer {
 			}
 		}
 		if (min_ind > -1) {
-			// sphere first
 			return new Intersection(scene.shapes.get(min_ind).getType(),
 					min_ind, min_t, r);
 		} else {
@@ -307,6 +303,12 @@ public class RayTracer {
 		return new Ray(camera_pos, ray_direction);
 	}
 
+	/**
+	 * 
+	 * @param point
+	 * @return returns 2D vector which is the position of projected point on
+	 *         screen
+	 */
 	public Vector projectPointOnScreen(Point point) {
 
 		double screenDist = scene.getCamera().getScreen_dist();
@@ -314,25 +316,27 @@ public class RayTracer {
 		Vector towards = scene.getCamera().getTowards();
 		Vector up = scene.getCamera().getUp();
 		Vector right = Vector.crossProd(towards, up);
-
-		Vector ray = Vector.sum(point.getP(),
+		Vector.normalize(right);
+		Vector pos = Vector.sum(point.getP(),
 				Vector.multiplyByConst(camera_pos, -1));
-		double ratio = Vector.dotProd(ray, towards) / screenDist;
-		Vector screenProj = Vector.multiplyByConst(ray, 1.0 / ratio);
+		double ratio = Vector.dotProd(pos, towards) / screenDist;
+		Vector screenProj = Vector.multiplyByConst(pos, 1.0 / ratio);
 		Vector centerOfScreen = Vector.multiplyByConst(towards, screenDist);
 		// vector from the center of screen to the projected point
 		Vector centerToProj = Vector.sum(screenProj,
 				Vector.multiplyByConst(centerOfScreen, -1));
 		double x_offset = Vector.dotProd(centerToProj, right);
-		if (x_offset < -1 || x_offset > 1) {
+		double half_screen_width = scene.getCamera().getScreen_width() / 2;
+		if (x_offset < -1 * half_screen_width || x_offset > half_screen_width) {
 			return null;
 		}
-		x_offset = (x_offset + 1.0d) / 2.0d;
+		x_offset = x_offset + half_screen_width;
 		double y_offset = Vector.dotProd(centerToProj, up);
-		if (y_offset < -1 || y_offset > 1) {
+		double half_screen_height = scene.getCamera().getScreen_height() / 2;
+		if (y_offset < -half_screen_height || y_offset > half_screen_height) {
 			return null;
 		}
-		y_offset = (-1 * y_offset + 1.0d) / 2.0d;
+		y_offset = (-1 * y_offset + half_screen_height);
 		point.setDist(Math.sqrt(Vector.square_dist(point.getP(), camera_pos)));
 		return new Vector(x_offset, y_offset, 0);
 	}
@@ -480,7 +484,11 @@ public class RayTracer {
 		return trans * (1 - mi) + trans * mi * iv;
 	}
 
-	private void fillSquare(Point[][] screen, int x, int y, Point p) {
+	/**
+	 * Fills a circle of received point into screen[][] array
+	 * 
+	 */
+	private void fillScreenSircle(Point[][] screen, int x, int y, Point p) {
 		double size = p.getCloud().getP_size() / p.getDist();
 		int w_begin = (int) Math.max(0, Math.floor(x - size));
 		int w_end = (int) Math.min(screen.length, Math.ceil(x + size));
@@ -516,7 +524,8 @@ public class RayTracer {
 				if (proj == null) {
 					continue;
 				}
-				fillSquare(screen, (int) Math.round(proj.getX() * imageWidth),
+				fillScreenSircle(screen,
+						(int) Math.round(proj.getX() * imageWidth),
 						(int) Math.round(proj.getY() * imageHeight), p);
 			}
 			System.out.println(scene.pcloud.get(i));
@@ -526,7 +535,8 @@ public class RayTracer {
 				if (proj == null) {
 					continue;
 				}
-				fillSquare(screen, (int) Math.round(proj.getX() * imageWidth),
+				fillScreenSircle(screen,
+						(int) Math.round(proj.getX() * imageWidth),
 						(int) Math.round(proj.getY() * imageHeight), p);
 			}
 		}

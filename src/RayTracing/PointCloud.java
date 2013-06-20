@@ -12,7 +12,7 @@ public class PointCloud {
 	private Color color;
 	private List<Vector> bbox_vectors;
 	private PointCloud bbox;
-	private final int bbox_point_size = 10;
+	private final int bbox_point_size = 7;
 
 	/**
 	 * @return the bbox
@@ -123,6 +123,9 @@ public class PointCloud {
 		this.cloud = cloud;
 	}
 
+	/**
+	 * Calculates the bounding box of this point cloud
+	 */
 	public void calcBBox() {
 		centerOfMass = centerOfMass();
 		int points = Math.min(cloud.size(), 1000);
@@ -195,6 +198,10 @@ public class PointCloud {
 		this.centerOfMass = centerOfMass;
 	}
 
+	/**
+	 * 
+	 * @return center of mass of point cloud
+	 */
 	public Vector centerOfMass() {
 		double sumX = 0, sumY = 0, sumZ = 0;
 		double size = cloud.size();
