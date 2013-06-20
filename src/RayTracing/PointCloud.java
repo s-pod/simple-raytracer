@@ -125,9 +125,10 @@ public class PointCloud {
 
 	public void calcBBox() {
 		centerOfMass = centerOfMass();
-		int offset = (int) Math.floor(cloud.size() / 1000.0d);
+		int points = Math.min(cloud.size(), 1000);
+		int offset = (int) Math.floor((double) cloud.size() / (double) points);
 		double[][] m = new double[3][1000];
-		for (int i = 0; i < 1000; i++) {
+		for (int i = 0; i < points; i++) {
 			m[0][i] = cloud.get(i * offset).getP().getX() - centerOfMass.getX();
 			m[1][i] = cloud.get(i * offset).getP().getY() - centerOfMass.getY();
 			m[2][i] = cloud.get(i * offset).getP().getZ() - centerOfMass.getZ();
