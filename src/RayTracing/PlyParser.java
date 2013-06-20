@@ -23,7 +23,7 @@ public class PlyParser {
 				float ny = scanner.nextFloat();
 				float nz = scanner.nextFloat();
 				point_cloud.addPoint(new Point(new Vector(x, y, z), new Vector(
-						nx, ny, nz)));
+						nx, ny, nz),point_cloud));
 			}
 		}
 		System.out.println("Finishing parsing");

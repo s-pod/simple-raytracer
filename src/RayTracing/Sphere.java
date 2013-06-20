@@ -69,7 +69,6 @@ public class Sphere extends Shape {
 	}
 
 	public Vector getNormal(Vector point) {
-		// TODO Auto-generated method stub
 		Vector normal = Vector.sum(point,
 				Vector.multiplyByConst(center, -1));
 		Vector.normalize(normal);

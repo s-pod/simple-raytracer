@@ -47,7 +47,6 @@ public class Plane extends Shape {
 
 	@Override
 	public Vector getNormal(Vector point) {
-		// TODO Auto-generated method stub
 		return normal;
 	}
 

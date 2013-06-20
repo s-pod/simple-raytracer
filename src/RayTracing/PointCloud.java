@@ -11,7 +11,24 @@ public class PointCloud {
 	private int p_size;
 	private Color color;
 	private List<Vector> bbox_vectors;
-	private List<Vector> bbox_points;
+	private PointCloud bbox;
+	private final int bbox_point_size = 10;
+
+	/**
+	 * @return the bbox
+	 */
+	public PointCloud getBbox() {
+		return bbox;
+	}
+
+	/**
+	 * @param bbox
+	 *            the bbox to set
+	 */
+	public void setBbox(PointCloud bbox) {
+		this.bbox = bbox;
+	}
+
 	private Vector centerOfMass;
 	private Vector centerOfBox;
 
@@ -23,24 +40,11 @@ public class PointCloud {
 	}
 
 	/**
-	 * @param bbox_vectors the bbox_vectors to set
+	 * @param bbox_vectors
+	 *            the bbox_vectors to set
 	 */
 	public void setBbox_vectors(List<Vector> bbox_vectors) {
 		this.bbox_vectors = bbox_vectors;
-	}
-
-	/**
-	 * @return the bbox_points
-	 */
-	public List<Vector> getBbox_points() {
-		return bbox_points;
-	}
-
-	/**
-	 * @param bbox_points the bbox_points to set
-	 */
-	public void setBbox_points(List<Vector> bbox_points) {
-		this.bbox_points = bbox_points;
 	}
 
 	/**
@@ -51,7 +55,8 @@ public class PointCloud {
 	}
 
 	/**
-	 * @param centerOfBox the centerOfBox to set
+	 * @param centerOfBox
+	 *            the centerOfBox to set
 	 */
 	public void setCenterOfBox(Vector centerOfBox) {
 		this.centerOfBox = centerOfBox;
@@ -66,7 +71,7 @@ public class PointCloud {
 		this.color = color;
 		this.cloud = new ArrayList<Point>();
 		bbox_vectors = new ArrayList<Vector>();
-		bbox_points = new ArrayList<Vector>();
+		bbox = null;
 	}
 
 	/**
@@ -149,27 +154,28 @@ public class PointCloud {
 			bbox_vectors.add(Vector.multiplyByConst(v, pos_len));
 			bbox_vectors.add(Vector.multiplyByConst(v, neg_len));
 		}
+		bbox = new PointCloud(bbox_point_size, new Color(0, 0, 0.5));
 		for (int i = 0; i < 2; i++) {
-			Vector p1 = Vector.sum(
+			Point p1 = new Point(Vector.sum(
 					Vector.sum(Vector.sum(bbox_vectors.get(i),
 							bbox_vectors.get(2)), bbox_vectors.get(4)),
-					centerOfMass);
-			Vector p2 = Vector.sum(
+					centerOfMass), null, bbox);
+			Point p2 = new Point(Vector.sum(
 					Vector.sum(Vector.sum(bbox_vectors.get(i),
 							bbox_vectors.get(2)), bbox_vectors.get(5)),
-					centerOfMass);
-			Vector p3 = Vector.sum(
+					centerOfMass), null, bbox);
+			Point p3 = new Point(Vector.sum(
 					Vector.sum(Vector.sum(bbox_vectors.get(i),
 							bbox_vectors.get(3)), bbox_vectors.get(5)),
-					centerOfMass);
-			Vector p4 = Vector.sum(
+					centerOfMass), null, bbox);
+			Point p4 = new Point(Vector.sum(
 					Vector.sum(Vector.sum(bbox_vectors.get(i),
 							bbox_vectors.get(3)), bbox_vectors.get(4)),
-					centerOfMass);
-			bbox_points.add(p1);
-			bbox_points.add(p2);
-			bbox_points.add(p3);
-			bbox_points.add(p4);
+					centerOfMass), null, bbox);
+			bbox.addPoint(p1);
+			bbox.addPoint(p2);
+			bbox.addPoint(p3);
+			bbox.addPoint(p4);
 		}
 	}
 
@@ -201,8 +207,8 @@ public class PointCloud {
 
 	public String toString() {
 		String s = "";
-		for (int i = 0; i < bbox_points.size(); i++) {
-			s += bbox_points.get(i) + "\n";
+		for (int i = 0; i < bbox.getCloud().size(); i++) {
+			s += bbox.getCloud().get(i).getP() + "\n";
 
 		}
 		return s;

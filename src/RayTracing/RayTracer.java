@@ -17,8 +17,6 @@ import java.io.IOException;
 
 import javax.imageio.ImageIO;
 
-import Jama.Matrix;
-
 /**
  * Main class for ray tracing exercise.
  */
@@ -96,8 +94,7 @@ public class RayTracer {
 			} else {
 				String code = line.substring(0, 3).toLowerCase();
 				// Split according to white space characters:
-				String[] params = line.substring(3).trim().toLowerCase()
-						.split("\\s+");
+				String[] params = line.substring(3).trim().split("\\s+");
 
 				if (code.equals("cam")) {
 					// Add code here to parse camera parameters
@@ -310,7 +307,7 @@ public class RayTracer {
 		return new Ray(camera_pos, ray_direction);
 	}
 
-	public Vector projectPointOnScreen(Vector point) {
+	public Vector projectPointOnScreen(Point point) {
 
 		double screenDist = scene.getCamera().getScreen_dist();
 		Vector camera_pos = scene.getCamera().getPosition();
@@ -318,7 +315,8 @@ public class RayTracer {
 		Vector up = scene.getCamera().getUp();
 		Vector right = Vector.crossProd(towards, up);
 
-		Vector ray = Vector.sum(point, Vector.multiplyByConst(camera_pos, -1));
+		Vector ray = Vector.sum(point.getP(),
+				Vector.multiplyByConst(camera_pos, -1));
 		double ratio = Vector.dotProd(ray, towards) / screenDist;
 		Vector screenProj = Vector.multiplyByConst(ray, 1.0 / ratio);
 		Vector centerOfScreen = Vector.multiplyByConst(towards, screenDist);
@@ -335,8 +333,8 @@ public class RayTracer {
 			return null;
 		}
 		y_offset = (-1 * y_offset + 1.0d) / 2.0d;
-		return new Vector(x_offset, y_offset, scene.pcloud.get(0).getP_size()
-				/ Math.sqrt(Vector.square_dist(point, camera_pos)));
+		point.setDist(Math.sqrt(Vector.square_dist(point.getP(), camera_pos)));
+		return new Vector(x_offset, y_offset, 0);
 	}
 
 	/**
@@ -471,7 +469,6 @@ public class RayTracer {
 	 * returns the new reflect color after applying incidence
 	 */
 	private Color incidentReflect(Color c, double mi, double iv) {
-		// TODO Auto-generated method stub
 		return Color.add(Color.multiply(c, (1 - mi)),
 				Color.multiply(c, mi * (1 - iv)));
 	}
@@ -480,8 +477,26 @@ public class RayTracer {
 	 * returns the new transparency value after applying incidence
 	 */
 	private Double incidentTrans(double trans, double mi, double iv) {
-		// TODO Auto-generated method stub
 		return trans * (1 - mi) + trans * mi * iv;
+	}
+
+	private void fillSquare(Point[][] screen, int x, int y, Point p) {
+		double size = p.getCloud().getP_size() / p.getDist();
+		int w_begin = (int) Math.max(0, Math.floor(x - size));
+		int w_end = (int) Math.min(screen.length, Math.ceil(x + size));
+		int h_begin = (int) Math.max(0, Math.floor(y - size));
+		int h_end = (int) Math.min(screen[0].length, Math.ceil(y + size));
+		for (int i = w_begin; i < w_end; i++) {
+			for (int j = h_begin; j < h_end; j++) {
+				if ((i - x) * (i - x) + (j - y) * (j - y) <= size * size / 4) {
+					if (screen[i][j] == null) {
+						screen[i][j] = p;
+					} else if (screen[i][j].getDist() > p.getDist()) {
+						screen[i][j] = p;
+					}
+				}
+			}
+		}
 	}
 
 	/**
@@ -492,53 +507,41 @@ public class RayTracer {
 		int x, y, i, j;
 		// Create a byte array to hold the pixel data:
 		byte[] rgbData = new byte[this.imageWidth * this.imageHeight * 3];
-		boolean[][] screen = new boolean[imageWidth][imageHeight];
-		boolean[][] bbox = new boolean[imageWidth][imageHeight];
+		Point[][] screen = new Point[imageWidth][imageHeight];
 		for (i = 0; i < scene.pcloud.size(); i++) {
 			scene.pcloud.get(i).calcBBox();
 			for (j = 0; j < scene.pcloud.get(i).getCloud().size(); j++) {
-
-				Vector proj = projectPointOnScreen(scene.pcloud.get(i)
-						.getCloud().get(j).getP());
+				Point p = scene.pcloud.get(i).getCloud().get(j);
+				Vector proj = projectPointOnScreen(p);
 				if (proj == null) {
 					continue;
 				}
-				int size_w = (int) Math.round(proj.getZ());
-				int size_h = (int) Math.round(proj.getZ());
 				fillSquare(screen, (int) Math.round(proj.getX() * imageWidth),
-						(int) Math.round(proj.getY() * imageHeight), size_w,
-						size_h);
+						(int) Math.round(proj.getY() * imageHeight), p);
 			}
 			System.out.println(scene.pcloud.get(i));
-		}
-
-		for (i = 0; i < 8; i++) {
-			Vector proj = projectPointOnScreen(scene.pcloud.get(0)
-					.getBbox_points().get(i));
-			if (proj == null) {
-				continue;
+			for (int k = 0; k < scene.pcloud.get(i).getBbox().getCloud().size(); k++) {
+				Point p = scene.pcloud.get(i).getBbox().getCloud().get(k);
+				Vector proj = projectPointOnScreen(p);
+				if (proj == null) {
+					continue;
+				}
+				fillSquare(screen, (int) Math.round(proj.getX() * imageWidth),
+						(int) Math.round(proj.getY() * imageHeight), p);
 			}
-			int size_w = (int) Math.round(proj.getZ());
-			int size_h = (int) Math.round(proj.getZ());
-			fillSquare(bbox, (int) Math.round(proj.getX() * imageWidth),
-					(int) Math.round(proj.getY() * imageHeight), size_w, size_h);
 		}
 
 		for (y = 0; y < imageHeight; y++) {
-			// render points
-
 			// render scene
 			for (x = 0; x < imageWidth; x++) {
-				if (bbox[x][y]) {
-					rgbData[(y * this.imageWidth + (imageWidth - x - 1)) * 3 + 0] = (byte) (255);
-					rgbData[(y * this.imageWidth + (imageWidth - x - 1)) * 3 + 1] = (byte) (0);
-					rgbData[(y * this.imageWidth + (imageWidth - x - 1)) * 3 + 2] = (byte) (0);
-					continue;
-				}
-				if (screen[x][y]) {
-					rgbData[(y * this.imageWidth + (imageWidth - x - 1)) * 3 + 0] = (byte) (255);
-					rgbData[(y * this.imageWidth + (imageWidth - x - 1)) * 3 + 1] = (byte) (255);
-					rgbData[(y * this.imageWidth + (imageWidth - x - 1)) * 3 + 2] = (byte) (255);
+				if (screen[x][y] != null) {
+					Color c = screen[x][y].getCloud().getColor();
+					rgbData[(y * this.imageWidth + (imageWidth - x - 1)) * 3 + 0] = (byte) (c
+							.getR() * 255);
+					rgbData[(y * this.imageWidth + (imageWidth - x - 1)) * 3 + 1] = (byte) (c
+							.getG() * 255);
+					rgbData[(y * this.imageWidth + (imageWidth - x - 1)) * 3 + 2] = (byte) (c
+							.getB() * 255);
 					continue;
 				}
 				Ray r = ConstructRayThroughPixel(x, y);
@@ -570,21 +573,6 @@ public class RayTracer {
 
 	// ////////////////////// FUNCTIONS TO SAVE IMAGES IN PNG FORMAT
 	// //////////////////////////////////////////
-
-	private void fillSquare(boolean[][] screen, int x, int y, int size_w,
-			int size_h) {
-		// TODO Auto-generated method stub
-		for (int i = 0; i < screen.length; i++) {
-			for (int j = 0; j < screen[0].length; j++) {
-				if (i > x - (double) size_w / (double) 2
-						&& i < x + (double) size_w / (double) 2
-						&& j > y - (double) size_h / (double) 2
-						&& j < y + (double) size_h / (double) 2) {
-					screen[i][j] = true;
-				}
-			}
-		}
-	}
 
 	/*
 	 * Saves RGB data as an image in png format to the specified location.

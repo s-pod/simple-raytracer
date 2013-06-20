@@ -129,7 +129,6 @@ public class Vector {
 
 	@Override
 	public String toString() {
-		// TODO: unnecessary. Made for testing purposes.
-		return x + " " + y + " " + z;
+		return String.format("%.7f %.7f %.7f", x, y, z);
 	}
 }
